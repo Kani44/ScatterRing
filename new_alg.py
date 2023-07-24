@@ -39,8 +39,52 @@ class Source:
 source = Source(True)
 
 def collect():
+    window = 0.5
+    gap = 2000
+    current_data = []
+    current_state = []
+    once = True
     while True:
-        
+        current_data.append(source.getData(True))
+        if len(current_data) >= int(window*48000):
+            current_data, current_state, once = process(current)
+
+
+def process(data, first, state):
+    med = np.median(data)
+    if first:
+        if (ran) < 0:
+            last_value = 1
+            print(last_value)
+            state = [ran]
+            first = False
+        else:
+            last_value = 0
+            print(last_value)
+            state = [ran]
+            first = False
+    else:
+
+                            
+        if (len(state)>=2) and (abs(ran-state[-2])>gap):    # Next few lines append a 0.25 sec 1/0 depending on the average value of the previous sample
+            if ((last_value == 1) and ((ran-state[-2]) < 0)) or ((last_value == 0) and ((ran-state[-2]) > 0)):
+                last_value = flip(last_value)
+                state = [ran]
+                print(last_value)
+                print(state)
+            else:
+                state.append(ran)
+                if len(state) == 5: 
+                    print(last_value)
+                    state = [ran]
+        else:
+            state.append(ran)
+            if len(state) == 5: 
+                print(last_value)
+                state = [ran]
+                #print(state)
+    data = []
+    return data, state, first
 
 
 
