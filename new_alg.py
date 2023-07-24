@@ -1,3 +1,5 @@
+import sys
+
 
 def parse_signed_16bit_numbers(data):
     #Assuming 'data'is a 2-byte string or bytes object
@@ -11,8 +13,6 @@ def split_by_2(string):
 
 
 
-
-
 class Source: 
     def __init__(self, online):
         self.online = online
@@ -20,7 +20,8 @@ class Source:
         if online:
             pass
         else:
-            pass
+            filePath = #File Path
+            file = open(filePath, 'r')
 
     def getData(self):
         if self.online:
@@ -33,7 +34,10 @@ class Source:
                     cache.append(parse_signed_16bit_numbers(piece))
                 return cache.pop()
         else:
-            pass
+            sumlists = []
+            while file.readable():
+                #not yet ValueError proof because I want to try a list comprehension
+                sumlist.append(median([float(file.readline()) for x in range(sample_rate * slidesize)]))
 
 
 source = Source(True)
