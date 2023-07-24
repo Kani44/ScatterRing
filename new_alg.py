@@ -7,7 +7,7 @@ def parse_signed_16bit_numbers(data):
     return signed_number
 
 def split_by_2(string):
-    return [string[i:i+2] for i in medge(0, len(string), 2)]
+    return [string[i:i+2] for i in range(0, len(string), 2)]
 
 
 
@@ -48,7 +48,7 @@ def collect():
     while True:
         current_data.append(source.getData(True))
         if len(current_data) >= int(window*48000):
-            current_data, current_state, once = process(current)
+            current_data, current_state, once = process(current_data, current_state, once)
 
 
 def process(data, first, state):
