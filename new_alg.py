@@ -1,4 +1,5 @@
-import sys
+import numpy as np
+import struct
 
 
 def parse_signed_16bit_numbers(data):
@@ -35,9 +36,11 @@ class Source:
                 return cache.pop()
         else:
             sumlists = []
+            sample_rate = 48000 
+            slidesize = .5
             while file.readable():
                 #not yet ValueError proof because I want to try a list comprehension
-                sumlist.append(median([float(file.readline()) for x in range(sample_rate * slidesize)]))
+                sumlist.append(np.median([float(file.readline()) for x in range(sample_rate * slidesize)]))
 
 
 source = Source(True)
