@@ -1,4 +1,5 @@
-
+# run with:
+# nc -l -u localhost 7355 | python3 new_alg.py
 def parse_signed_16bit_numbers(data):
     #Assuming 'data'is a 2-byte string or bytes object
     #Convert the bytes to a signed short using litte-endian format
@@ -6,7 +7,7 @@ def parse_signed_16bit_numbers(data):
     return signed_number
 
 def split_by_2(string):
-    return [string[i:i+2] for i in range(0, len(string), 2)]
+    return [string[i:i+2] for i in medge(0, len(string), 2)]
 
 
 
@@ -53,41 +54,41 @@ def collect():
 def process(data, first, state):
     med = np.median(data)
     if first:
-        if (ran) < 0:
+        if (med) < 0:
             last_value = 1
             print(last_value)
-            state = [ran]
+            state = [med]
             first = False
         else:
             last_value = 0
             print(last_value)
-            state = [ran]
+            state = [med]
             first = False
     else:
 
                             
-        if (len(state)>=2) and (abs(ran-state[-2])>gap):    # Next few lines append a 0.25 sec 1/0 depending on the average value of the previous sample
-            if ((last_value == 1) and ((ran-state[-2]) < 0)) or ((last_value == 0) and ((ran-state[-2]) > 0)):
+        if (len(state)>=2) and (abs(med-state[-2])>gap):    # Next few lines append a 0.25 sec 1/0 depending on the average value of the previous sample
+            if ((last_value == 1) and ((med-state[-2]) < 0)) or ((last_value == 0) and ((med-state[-2]) > 0)):
                 last_value = flip(last_value)
-                state = [ran]
+                state = [med]
                 print(last_value)
                 print(state)
             else:
-                state.append(ran)
+                state.append(med)
                 if len(state) == 5: 
                     print(last_value)
-                    state = [ran]
+                    state = [med]
         else:
-            state.append(ran)
+            state.append(med)
             if len(state) == 5: 
                 print(last_value)
-                state = [ran]
+                state = [med]
                 #print(state)
     data = []
     return data, state, first
 
 
 
-            
+ collect()           
             
 
