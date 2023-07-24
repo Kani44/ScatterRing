@@ -1,5 +1,6 @@
 import numpy as np
 import struct
+import sys
 
 
 def parse_signed_16bit_numbers(data):
