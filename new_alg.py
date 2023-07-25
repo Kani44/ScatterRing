@@ -16,14 +16,12 @@ def parse_signed_16bit_numbers(data):
 def split_by_2(string):
     return [string[i:i+2] for i in range(0, len(string), 2)]
 
-'''
 def flip(value): 
     if value == 1:
         value = 0
     else:
         value = 1
     return value
-'''
 
 MyFile = sys.argv[1]
 
@@ -53,7 +51,7 @@ class Source:
             return(int(self.file.readline())) #seems to always be an int
 
     def collect(self):
-        current_data = []
+        current_data = [] #matters
         current_state = []
         x_axis = []
         allvals = []
@@ -62,7 +60,7 @@ class Source:
         once = True
         while True:
             current_data.append(source.getData())
-            if len(current_data) >= int(self.fixednum*48000):
+            if len(current_data) >= int(self.fixednum * self.sample_rate):
                 current_data, current_state, current_value, median, once = self.process(current_data, current_state, current_value, once)
                 self.graph(x_axis, median, allvals, current_value)
 
@@ -99,8 +97,7 @@ class Source:
     def graph(self, x_axis, medianValue, allvals, current_value):
         if medianValue.size > 0 :
             allvals.append(medianValue)
-            print('med', medianValue)
-            x_axis.append(0.5 * (len(x_axis) + 1))
+            x_axis.append(0.5 * (len(x_axis) + 1)) #keeps a running list of proper x-vals
             plt.plot(x_axis, allvals, color = 'black')
             if current_value == 0:
                 plt.title('ON', fontsize = 30, pad = 20)
