@@ -23,10 +23,12 @@ def flip(value):
         value = 1
     return value
 
+
 MyFile = sys.argv[1]
 WindowSize = float(sys.argv[2])
 WindowSlide = float(sys.argv[3])
 GapSize = float(sys.argv[4])
+
 
 
 class Source: 
@@ -41,6 +43,7 @@ class Source:
             pass
         else:
             self.file = open(filePath, 'r')
+            print("hi")
 
     def getData(self):
         if self.online:
@@ -72,23 +75,27 @@ class Source:
 
 
     def process(self, data, state, last_value, first):
+
         med = np.median(data) #a single number
+        print(state)
         if first:
             if (med) < 0: #replace 0 with a number
                 last_value = 1
             else:
                 last_value = 0
             state = [med] #state is one median long
+            
             first = False
         else: #not the first time
-            if len(state)>=2 and abs(med-state[-2]) > self.gap: #and (last_value == np.sign(med-state[-2]) + 2 or last_value == np.sign(med-state[-2]) - 1):
+            if (len(state)>=1) and (abs(med-state[-1]) > self.gap) and (((last_value == 1) and ((med-state[-1]) < 0)) or ((last_value == 0) and ((med-state[-1]) > 0))):
                 last_value = flip(last_value)
                 print(last_value)
                 state = [med]
-            else: #no value switch
+            else: #no last_value switch
                 state.append(med)
                 if len(state) == 5:
                     state = [med]
+                    print(last_value)
         
         return state, last_value, med, first
 
