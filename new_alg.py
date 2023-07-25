@@ -87,7 +87,7 @@ class Source:
             
             first = False
         else: #not the first time
-            if (len(state)>=1) and (abs(med-state[-1]) > gap) and (((last_value == 1) and ((med-state[-1]) < 0)) or ((last_value == 0) and ((med-state[-1]) > 0))):
+            if (len(state)>=1) and (abs(med-state[-1]) > self.gap) and (((last_value == 1) and ((med-state[-1]) < 0)) or ((last_value == 0) and ((med-state[-1]) > 0))):
                 last_value = flip(last_value)
                 print(last_value)
                 state = [med]
