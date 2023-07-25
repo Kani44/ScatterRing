@@ -55,7 +55,7 @@ class Source:
 
     def collect(self):
         current_data = [] #the list of single lines of data read in through the getData function
-        current_state = [] #the list of medians?
+        current_state = [] #the list of medians(maxlen 5)
         x_axis = []
         allvals = []
         current_value = 0 #whether the most recently read median is a one or zero?
@@ -80,17 +80,11 @@ class Source:
             state = [med] #state is one median long
             first = False
             
-        else:
-            if (len(state)>=2) and (abs(med-state[-2])>gap):    # Next few lines append a 0.25 sec 1/0 depending on the average value of the previous sample
-                
-                if ((value == 1) and ((med-state[-2]) < 0)) or ((value == 0) and ((med-state[-2]) > 0)):
-                    value = flip(value)
-                    state = [med]
-                else:
-                    state.append(med)
-                    if len(state) == 5: 
-                        state = [med]
-            else:
+        else: #not the first time
+            if len(state)>=2 and abs(med-state[-2]) > gap and (value == np.sign(med-state[-2]) + 2 or value == np.sign(med-state[-2]) - 2):
+                value = flip(value)
+                state = [med]
+            else: #no value switch
                 state.append(med)
                 if len(state) == 5:
                     state = [med]
