@@ -52,7 +52,7 @@ class Source:
                     '''
 
 
-source = Source(0, r'C:\Users\ubicomplab\Downloads\sdrdataread\stuff.csv')
+source = Source(False, r'C:\Users\ubicomplab\Downloads\sdrdataread\stuff.csv')
 print(source.getData())
 
 #def collect():
