@@ -72,7 +72,7 @@ def collect():
 
 
 def process(data, state, last_value, first):
-    gap = 50
+    gap = 3000
     med = np.median(data)
     print(state)
     if first:
@@ -89,12 +89,12 @@ def process(data, state, last_value, first):
     else:
 
                             
-        if (len(state)>=2) and (abs(med-state[-2])>gap):    # Next few lines append a 0.25 sec 1/0 depending on the average value of the previous sample
-            if ((last_value == 1) and ((med-state[-2]) < 0)) or ((last_value == 0) and ((med-state[-2]) > 0)):
+        if (len(state)>=1) and (abs(med-state[-1])>gap):    # Next few lines append a 0.25 sec 1/0 depending on the average value of the previous sample
+            if ((last_value == 1) and ((med-state[-1]) < 0)) or ((last_value == 0) and ((med-state[-1]) > 0)):
                 last_value = flip(last_value)
                 state = [med]
                 print(last_value)
-                print(state)
+                
             else:
                 state.append(med)
                 if len(state) == 5: 
@@ -112,7 +112,6 @@ def process(data, state, last_value, first):
 def graph(x_axis, medianValue, allvals, current_value):
     if medianValue.size > 0 :
         allvals.append(medianValue)
-        print('med', medianValue)
         x_axis.append(0.5 * (len(x_axis) + 1))
         plt.plot(x_axis, allvals, color = 'black')
         if current_value == 0:
