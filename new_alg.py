@@ -54,37 +54,37 @@ class Source:
             return(int(self.file.readline())) #seems to always be an int
 
     def collect(self):
-        current_data = [] #matters
-        current_state = []
+        current_data = [] #the list of single lines of data read in through the getData function
+        current_state = [] #the list of medians?
         x_axis = []
         allvals = []
-        current_value = 0
+        current_value = 0 #whether the most recently read median is a one or zero?
         self.graphinit() #initialize 
-        once = True
+        first = True
         while True:
             current_data.append(source.getData())
             if len(current_data) >= int(self.fixednum * self.sample_rate):
-                current_data, current_state, current_value, median, once = self.process(current_data, current_state, current_value, once)
+                current_state, current_value, median, first = self.process(current_data, current_state, current_value, first)
                 self.graph(x_axis, median, allvals, current_value)
+                current_data = []
 
 
-    def process(self, data, state, last_value, first):
+    def process(self, data, state, value, first):
         gap = 50 #changeable
-        med = np.median(data)
+        med = np.median(data) #a single number
         if first:
-            if (med) < 0:
-                last_value = 1
-                state = [med]
-                first = False
-            else:
-                last_value = 0
-                state = [med]
-                first = False
+            if (med) < 0: #if the first median is negative
+                value = 1
+            else: #if the first median is positive(or 0)
+                value = 0
+            state = [med] #state is one median long
+            first = False
+            
         else:
             if (len(state)>=2) and (abs(med-state[-2])>gap):    # Next few lines append a 0.25 sec 1/0 depending on the average value of the previous sample
                 
-                if ((last_value == 1) and ((med-state[-2]) < 0)) or ((last_value == 0) and ((med-state[-2]) > 0)):
-                    last_value = flip(last_value)
+                if ((value == 1) and ((med-state[-2]) < 0)) or ((value == 0) and ((med-state[-2]) > 0)):
+                    value = flip(value)
                     state = [med]
                 else:
                     state.append(med)
@@ -94,8 +94,8 @@ class Source:
                 state.append(med)
                 if len(state) == 5:
                     state = [med]
-        data = []
-        return data, state, last_value, med, first
+        
+        return state, value, med, first
 
     def graph(self, x_axis, medianValue, allvals, current_value):
         if medianValue.size > 0 :
