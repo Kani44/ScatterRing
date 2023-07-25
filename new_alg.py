@@ -26,11 +26,13 @@ def flip(value):
 MyFile = sys.argv[1]
 WindowSize = float(sys.argv[2])
 WindowSlide = float(sys.argv[3])
+GapSize = float(sys.argv[4])
 
 
 class Source: 
-    def __init__(self, online, fixednum, slidesize, filePath):
+    def __init__(self, online, fixednum, slidesize, gap, filePath):
         self.cache = []
+        self.gap = gap
         self.fixednum = fixednum
         self.slidesize = slidesize
         self.sample_rate = 48000
@@ -70,19 +72,18 @@ class Source:
 
 
     def process(self, data, state, last_value, first):
-        gap = 50 #changeable
         med = np.median(data) #a single number
         if first:
-            if (med) < 0: #if the first median is negative
+            if (med) < 0: #replace 0 with a number
                 last_value = 1
-            else: #if the first median is positive(or 0)
+            else:
                 last_value = 0
             state = [med] #state is one median long
             first = False
-            
         else: #not the first time
-            if len(state)>=2 and abs(med-state[-2]) > gap and (last_value == np.sign(med-state[-2]) + 2 or last_value == np.sign(med-state[-2]) - 1):
+            if len(state)>=2 and abs(med-state[-2]) > self.gap: #and (last_value == np.sign(med-state[-2]) + 2 or last_value == np.sign(med-state[-2]) - 1):
                 last_value = flip(last_value)
+                print(last_value)
                 state = [med]
             else: #no value switch
                 state.append(med)
@@ -111,8 +112,8 @@ class Source:
         plt.ylabel('Amplitude', fontsize = 15)
 
 
-source = Source(False, WindowSize, WindowSlide, r'%s' % MyFile)
+source = Source(False, WindowSize, WindowSlide, GapSize, r'%s' % MyFile)
 
-source.collect()           
+source.collect()
             
 
