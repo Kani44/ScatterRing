@@ -81,7 +81,7 @@ class Source:
             first = False
             
         else: #not the first time
-            if len(state)>=2 and abs(med-state[-2]) > gap and (value == np.sign(med-state[-2]) + 2 or value == np.sign(med-state[-2]) - 2):
+            if len(state)>=2 and abs(med-state[-2]) > gap and (value == np.sign(med-state[-2]) + 2 or value == np.sign(med-state[-2]) - 1):
                 value = flip(value)
                 state = [med]
             else: #no value switch
