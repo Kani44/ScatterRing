@@ -23,14 +23,18 @@ def flip(value):
         value = 1
     return value
 
-MyFile = "/Users/kanavarora/ProcessedML/Alt/test1.txt"
-WindowSize = 0.5
-WindowSlide = 0.5
+
+MyFile = sys.argv[1]
+WindowSize = float(sys.argv[2])
+WindowSlide = float(sys.argv[3])
+GapSize = float(sys.argv[4])
+
 
 
 class Source: 
-    def __init__(self, online, fixednum, slidesize, filePath):
+    def __init__(self, online, fixednum, slidesize, gap, filePath):
         self.cache = []
+        self.gap = gap
         self.fixednum = fixednum
         self.slidesize = slidesize
         self.sample_rate = 48000
@@ -71,18 +75,17 @@ class Source:
 
 
     def process(self, data, state, last_value, first):
-        gap = 3000 #changeable
+
         med = np.median(data) #a single number
         print(state)
         if first:
-            if (med) < 0: #if the first median is negative
+            if (med) < 0: #replace 0 with a number
                 last_value = 1
-            else: #if the first median is positive(or 0)
+            else:
                 last_value = 0
             state = [med] #state is one median long
             
             first = False
-            
         else: #not the first time
             if (len(state)>=1) and (abs(med-state[-1]) > gap) and (((last_value == 1) and ((med-state[-1]) < 0)) or ((last_value == 0) and ((med-state[-1]) > 0))):
                 last_value = flip(last_value)
@@ -116,8 +119,8 @@ class Source:
         plt.ylabel('Amplitude', fontsize = 15)
 
 
-source = Source(False, WindowSize, WindowSlide, r'%s' % MyFile)
+source = Source(False, WindowSize, WindowSlide, GapSize, r'%s' % MyFile)
 
-source.collect()           
+source.collect()
             
 
