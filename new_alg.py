@@ -7,6 +7,7 @@ import numpy as np
 import struct
 import matplotlib.pyplot as plt
 
+
 def parse_signed_16bit_numbers(data):
     #Assuming 'data'is a 2-byte string or bytes object
     #Convert the bytes to a signed short using litte-endian format
@@ -26,8 +27,6 @@ def flip(value):
 
 
 
-
-
 class Source: 
     
     cache = []
@@ -37,7 +36,8 @@ class Source:
         if online:
             pass
         else:
-            pass
+            filePath = #File Path
+            file = open(filePath, 'r')
 
     def getData(self):
         if self.online:
@@ -50,7 +50,12 @@ class Source:
                     self.cache.append(parse_signed_16bit_numbers(piece))
                 return self.cache.pop()
         else:
-            pass
+            sumlists = []
+            sample_rate = 48000 
+            slidesize = .5
+            while file.readable():
+                #not yet ValueError proof because I want to try a list comprehension
+                sumlist.append(np.median([float(file.readline()) for x in range(sample_rate * slidesize)]))
 
 
 source = Source(True)
