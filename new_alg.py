@@ -24,12 +24,15 @@ def flip(value):
     return value
 
 MyFile = sys.argv[1]
+WindowSize = float(sys.argv[2])
+WindowSlide = float(sys.argv[3])
+
 
 class Source: 
-    def __init__(self, online, filePath):
+    def __init__(self, online, fixednum, slidesize, filePath):
         self.cache = []
-        self.fixednum = .5
-        self.slidesize = .5
+        self.fixednum = fixednum
+        self.slidesize = slidesize
         self.sample_rate = 48000
         self.online = online
         if self.online:
@@ -66,7 +69,7 @@ class Source:
 
 
     def process(self, data, state, last_value, first):
-        gap = 50
+        gap = 50 #changeable
         med = np.median(data)
         if first:
             if (med) < 0:
@@ -114,7 +117,7 @@ class Source:
         plt.ylabel('Amplitude', fontsize = 15)
 
 
-source = Source(False, r'%s' % MyFile)
+source = Source(False, WindowSize, WindowSlide, r'%s' % MyFile)
 
 source.collect()           
             
