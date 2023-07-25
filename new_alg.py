@@ -1,5 +1,12 @@
 # run with:
 # nc -l -u localhost 7355 | python3 new_alg.py
+
+import sys
+from pynput import keyboard
+import numpy as np
+import struct
+import matplotlib.pyplot as plt
+
 def parse_signed_16bit_numbers(data):
     #Assuming 'data'is a 2-byte string or bytes object
     #Convert the bytes to a signed short using litte-endian format
@@ -9,15 +16,24 @@ def parse_signed_16bit_numbers(data):
 def split_by_2(string):
     return [string[i:i+2] for i in range(0, len(string), 2)]
 
+def flip(value): 
+    if value == 1:
+        value = 0
+    else:
+        value = 1
+    return value
+
 
 
 
 
 
 class Source: 
+    
+    cache = []
     def __init__(self, online):
         self.online = online
-        cache = []
+        
         if online:
             pass
         else:
@@ -25,14 +41,14 @@ class Source:
 
     def getData(self):
         if self.online:
-            if len(cache) > 0:
-                return cache.pop()
+            if len(self.cache) > 0:
+                return self.cache.pop()
             else:
                 data = sys.stdin.buffer.read(1024)
                 new_data = split_by_2(data)
-                for piece in data:
-                    cache.append(parse_signed_16bit_numbers(piece))
-                return cache.pop()
+                for piece in new_data:
+                    self.cache.append(parse_signed_16bit_numbers(piece))
+                return self.cache.pop()
         else:
             pass
 
@@ -41,18 +57,24 @@ source = Source(True)
 
 def collect():
     window = 0.5
-    gap = 2000
     current_data = []
     current_state = []
+    x_axis = []
+    allvals = []
+    current_value = 0
+    graphinit() #initialize 
     once = True
     while True:
-        current_data.append(source.getData(True))
+        current_data.append(source.getData())
         if len(current_data) >= int(window*48000):
-            current_data, current_state, once = process(current_data, current_state, once)
+            current_data, current_state, current_value, median, once = process(current_data, current_state, current_value, once)
+            graph(x_axis, median, allvals, current_value)
 
 
-def process(data, first, state):
+def process(data, state, last_value, first):
+    gap = 50
     med = np.median(data)
+    print(state)
     if first:
         if (med) < 0:
             last_value = 1
@@ -85,10 +107,28 @@ def process(data, first, state):
                 state = [med]
                 #print(state)
     data = []
-    return data, state, first
+    return data, state, last_value, med, first
 
+def graph(x_axis, medianValue, allvals, current_value):
+    if medianValue.size > 0 :
+        allvals.append(medianValue)
+        print('med', medianValue)
+        x_axis.append(0.5 * (len(x_axis) + 1))
+        plt.plot(x_axis, allvals, color = 'black')
+        if current_value == 0:
+            plt.title('ON', fontsize = 30, pad = 20)
+        else:
+            plt.title('OFF', fontsize = 30, pad = 20)
+        plt.draw()
+        plt.pause(0.001)
 
+def graphinit():
+    plt.figure()
+    plt.ion()
+    plt.show()
+    plt.xlabel('Time (s)', fontsize = 15)
+    plt.ylabel('Amplitude', fontsize = 15)
 
- collect()           
+collect()           
             
 
