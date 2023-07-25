@@ -69,27 +69,27 @@ class Source:
                 current_data = []
 
 
-    def process(self, data, state, value, first):
+    def process(self, data, state, last_value, first):
         gap = 50 #changeable
         med = np.median(data) #a single number
         if first:
             if (med) < 0: #if the first median is negative
-                value = 1
+                last_value = 1
             else: #if the first median is positive(or 0)
-                value = 0
+                last_value = 0
             state = [med] #state is one median long
             first = False
             
         else: #not the first time
-            if len(state)>=2 and abs(med-state[-2]) > gap and (value == np.sign(med-state[-2]) + 2 or value == np.sign(med-state[-2]) - 1):
-                value = flip(value)
+            if len(state)>=2 and abs(med-state[-2]) > gap and (last_value == np.sign(med-state[-2]) + 2 or last_value == np.sign(med-state[-2]) - 1):
+                last_value = flip(last_value)
                 state = [med]
             else: #no value switch
                 state.append(med)
                 if len(state) == 5:
                     state = [med]
         
-        return state, value, med, first
+        return state, last_value, med, first
 
     def graph(self, x_axis, medianValue, allvals, current_value):
         if medianValue.size > 0 :
