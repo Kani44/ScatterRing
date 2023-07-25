@@ -16,38 +16,47 @@ def split_by_2(string):
 
 
 class Source: 
-    def __init__(self, online):
+    sample_rate = 48000
+    fixednum = .5
+    slidesize = .5
+    cache = []
+    def __init__(self, online, filePath):
         self.online = online
-        cache = []
         if online:
             pass
         else:
-            filePath = #File Path
-            file = open(filePath, 'r')
+            self.file = open(filePath, 'r')
 
     def getData(self):
         if self.online:
-            if len(cache) > 0:
-                return cache.pop()
+            if len(self.cache) > 0:
+                return self.cache.pop()
             else:
                 data = sys.stdin.buffer.read(1024)
                 new_data = split_by_2(data)
-                for piece in data:
-                    cache.append(parse_signed_16bit_numbers(piece))
-                return cache.pop()
+                for piece in new_data:
+                    self.cache.append(parse_signed_16bit_numbers(piece))
+                return self.cache.pop()
         else:
-            sumlists = []
-            sample_rate = 48000 
-            slidesize = .5
-            while file.readable():
-                #not yet ValueError proof because I want to try a list comprehension
-                sumlist.append(np.median([float(file.readline()) for x in range(sample_rate * slidesize)]))
+            return(self.file.readline())
+            '''
+            self.sumlists = []
+            stuff = []
+            for line in self.file:
+                try:
+                    stuff.append(float(line))
+                except ValueError:
+                    print(line)
+                if len(stuff) >= self.sample_rate*self.fixednum:
+                    self.sumlists.append(np.median(stuff))
+                    '''
 
 
-source = Source(True)
+source = Source(0, r'C:\Users\ubicomplab\Downloads\sdrdataread\stuff.csv')
+print(source.getData())
 
-def collect():
-    while True:
+#def collect():
+ #   while True:
         
 
 
