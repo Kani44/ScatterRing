@@ -31,7 +31,7 @@ parser.add_argument('window', type=float)
 parser.add_argument('slide', type=float)
 parser.add_argument('gap', type=float)
 parser.add_argument('--file', type=str, required=(not 'on'=='True'))
-#l
+
 args = parser.parse_args()
 ReadingType = args.on == 'True'
 WindowSize = args.window
