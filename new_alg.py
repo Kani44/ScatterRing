@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
+import argparse
 
 
 def parse_signed_16bit_numbers(data):
@@ -24,11 +25,22 @@ def flip(value):
     return value
 
 
-MyFile = sys.argv[1]
-WindowSize = float(sys.argv[2])
-WindowSlide = float(sys.argv[3])
-GapSize = float(sys.argv[4])
+parser = argparse.ArgumentParser()
+parser.add_argument('on', type=str)
+parser.add_argument('window', type=float)
+parser.add_argument('slide', type=float)
+parser.add_argument('gap', type=float)
+parser.add_argument('--file', type=str, required=(not 'on'=='True'))
 
+args = parser.parse_args()
+ReadingType = args.on == 'True'
+WindowSize = args.window
+WindowSlide = args.slide
+GapSize = args.gap
+if not ReadingType:
+    MyFile = args.file
+else:
+    MyFile = ''
 
 
 class Source: 
@@ -43,7 +55,7 @@ class Source:
             pass
         else:
             self.file = open(filePath, 'r')
-            print("hi")
+            print("File Opened")
 
     def getData(self):
         if self.online:
@@ -119,7 +131,7 @@ class Source:
         plt.ylabel('Amplitude', fontsize = 15)
 
 
-source = Source(False, WindowSize, WindowSlide, GapSize, r'%s' % MyFile)
+source = Source(ReadingType, WindowSize, WindowSlide, GapSize, r'%s' % MyFile)
 
 source.collect()
             
