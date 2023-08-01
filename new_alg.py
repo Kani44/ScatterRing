@@ -71,18 +71,17 @@ class Source:
             return(int(self.file.readline())) #seems to always be an int
 
     def collect(self):
+        self.grapher = Grapher()
         current_data = [] #the list of single lines of data read in through the getData function
         current_state = [] #the list of medians(maxlen 5)
-        x_axis = []
-        allvals = []
         current_value = 0 #whether the most recently read median is a one or zero?
-        self.graphinit() #initialize 
+        self.grapher.graphinit() #initialize 
         first = True
         while True:
             current_data.append(source.getData())
             if len(current_data) >= int(self.fixednum * self.sample_rate):
                 current_state, current_value, median, first = self.process(current_data, current_state, current_value, first)
-                self.graph(x_axis, median, allvals, current_value)
+                self.grapher.graph(median, current_value)
                 current_data = []
 
 
@@ -111,11 +110,16 @@ class Source:
         
         return state, last_value, med, first
 
-    def graph(self, x_axis, medianValue, allvals, current_value):
+class Grapher:
+    def __init__(self):
+        self.x_axis = []
+        self.allvals = []
+    
+    def graph(self, medianValue, current_value):
         if medianValue.size > 0 :
-            allvals.append(medianValue)
-            x_axis.append(0.5 * (len(x_axis) + 1)) #keeps a running list of proper x-vals
-            plt.plot(x_axis, allvals, color = 'black')
+            self.allvals.append(medianValue)
+            self.x_axis.append(0.5 * (len(self.x_axis) + 1)) #keeps a running list of proper x-vals
+            plt.plot(self.x_axis, self.allvals, color = 'black')
             if current_value == 0:
                 plt.title('ON', fontsize = 30, pad = 20)
             else:
