@@ -6,6 +6,7 @@ import numpy as np
 import struct
 import matplotlib.pyplot as plt
 import argparse
+import time
 
 
 def parse_signed_16bit_numbers(data):
@@ -31,14 +32,14 @@ parser.add_argument('window', type=float)
 parser.add_argument('slide', type=float)
 parser.add_argument('gap', type=float)
 parser.add_argument('--file', type=str, required=(not 'on'=='True'))
-parser.add_argument('--graph', type=str, default='', required=False)
+parser.add_argument('--graph', action='store_true')
 
 args = parser.parse_args()
 ReadingType = args.on == 'True'
 WindowSize = args.window
 WindowSlide = args.slide
 GapSize = args.gap
-GraphOn = args.graph == 'True'
+GraphOn = args.graph
 if not ReadingType:
     MyFile = args.file
 else:
@@ -71,20 +72,27 @@ class Source:
                     self.cache.append(parse_signed_16bit_numbers(piece))
                 return self.cache.pop()
         else:
-            return(int(self.file.readline())) #seems to always be an int
+            try:
+                return(int(self.file.readline())) #seems to always be an int
+            except ValueError:
+                return(None)
 
     def collect(self):
         if self.graph:
-            self.grapher = Grapher()
+            self.grapher = Grapher(self.slidesize)
             self.grapher.graphinit() #initialize 
         current_data = [] #the list of single lines of data read in through the getData function
         current_state = [] #the list of medians(maxlen 5)
         current_value = 0 #whether the most recently read median is a one or zero?
         first = True
         while True:
-            current_data.append(source.getData())
+            value = source.getData()
+            if value == None:
+                break
+            current_data.append(value)
             if len(current_data) >= int(self.fixednum * self.sample_rate):
                 current_state, current_value, median, first = self.process(current_data, current_state, current_value, first)
+                #time.sleep(0.1)
                 if self.graph:
                     self.grapher.graph(median, current_value)
                 current_data = []
@@ -116,14 +124,15 @@ class Source:
         return state, last_value, med, first
 
 class Grapher:
-    def __init__(self):
+    def __init__(self, slider):
         self.x_axis = []
         self.allvals = []
+        self.slider = slider
     
     def graph(self, medianValue, current_value):
         if medianValue.size > 0 :
             self.allvals.append(medianValue)
-            self.x_axis.append(0.5 * (len(self.x_axis) + 1)) #keeps a running list of proper x-vals
+            self.x_axis.append(self.slider * (len(self.x_axis) + 1)) #keeps a running list of proper x-vals
             plt.plot(self.x_axis, self.allvals, color = 'black')
             if current_value == 0:
                 plt.title('ON', fontsize = 30, pad = 20)
@@ -143,5 +152,3 @@ class Grapher:
 source = Source(ReadingType, WindowSize, WindowSlide, GapSize, GraphOn, r'%s' % MyFile)
 
 source.collect()
-            
-
