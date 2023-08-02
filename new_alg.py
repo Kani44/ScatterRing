@@ -5,6 +5,8 @@ import sys
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
+import argparse
+import time
 
 
 def parse_signed_16bit_numbers(data):
@@ -24,16 +26,30 @@ def flip(value):
     return value
 
 
-MyFile = sys.argv[1]
-WindowSize = float(sys.argv[2])
-WindowSlide = float(sys.argv[3])
-GapSize = float(sys.argv[4])
+parser = argparse.ArgumentParser()
+parser.add_argument('on', type=str)
+parser.add_argument('window', type=float)
+parser.add_argument('slide', type=float)
+parser.add_argument('gap', type=float)
+parser.add_argument('--file', type=str, required=(not 'on'=='True'))
+parser.add_argument('--graph', action='store_true')
 
+args = parser.parse_args()
+ReadingType = args.on == 'True'
+WindowSize = args.window
+WindowSlide = args.slide
+GapSize = args.gap
+GraphOn = args.graph
+if not ReadingType:
+    MyFile = args.file
+else:
+    MyFile = ''
 
 
 class Source: 
-    def __init__(self, online, fixednum, slidesize, gap, filePath):
+    def __init__(self, online, fixednum, slidesize, gap, graph, filePath):
         self.cache = []
+        self.graph = graph
         self.gap = gap
         self.fixednum = fixednum
         self.slidesize = slidesize
@@ -43,7 +59,7 @@ class Source:
             pass
         else:
             self.file = open(filePath, 'r')
-            print("hi")
+            print("File Opened")
 
     def getData(self):
         if self.online:
@@ -56,21 +72,29 @@ class Source:
                     self.cache.append(parse_signed_16bit_numbers(piece))
                 return self.cache.pop()
         else:
-            return(int(self.file.readline())) #seems to always be an int
+            try:
+                return(int(self.file.readline())) #seems to always be an int
+            except ValueError:
+                return(None)
 
     def collect(self):
+        if self.graph:
+            self.grapher = Grapher(self.slidesize)
+            self.grapher.graphinit() #initialize 
         current_data = [] #the list of single lines of data read in through the getData function
         current_state = [] #the list of medians(maxlen 5)
-        x_axis = []
-        allvals = []
         current_value = 0 #whether the most recently read median is a one or zero?
-        self.graphinit() #initialize 
         first = True
         while True:
-            current_data.append(source.getData())
+            value = source.getData()
+            if value == None:
+                break
+            current_data.append(value)
             if len(current_data) >= int(self.fixednum * self.sample_rate):
                 current_state, current_value, median, first = self.process(current_data, current_state, current_value, first)
-                self.graph(x_axis, median, allvals, current_value)
+                #time.sleep(0.1)
+                if self.graph:
+                    self.grapher.graph(median, current_value)
                 current_data = []
 
 
@@ -99,11 +123,17 @@ class Source:
         
         return state, last_value, med, first
 
-    def graph(self, x_axis, medianValue, allvals, current_value):
+class Grapher:
+    def __init__(self, slider):
+        self.x_axis = []
+        self.allvals = []
+        self.slider = slider
+    
+    def graph(self, medianValue, current_value):
         if medianValue.size > 0 :
-            allvals.append(medianValue)
-            x_axis.append(0.5 * (len(x_axis) + 1)) #keeps a running list of proper x-vals
-            plt.plot(x_axis, allvals, color = 'black')
+            self.allvals.append(medianValue)
+            self.x_axis.append(self.slider * (len(self.x_axis) + 1)) #keeps a running list of proper x-vals
+            plt.plot(self.x_axis, self.allvals, color = 'black')
             if current_value == 0:
                 plt.title('ON', fontsize = 30, pad = 20)
             else:
@@ -119,8 +149,6 @@ class Source:
         plt.ylabel('Amplitude', fontsize = 15)
 
 
-source = Source(False, WindowSize, WindowSlide, GapSize, r'%s' % MyFile)
+source = Source(ReadingType, WindowSize, WindowSlide, GapSize, GraphOn, r'%s' % MyFile)
 
 source.collect()
-            
-
