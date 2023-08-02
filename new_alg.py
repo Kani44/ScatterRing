@@ -31,12 +31,14 @@ parser.add_argument('window', type=float)
 parser.add_argument('slide', type=float)
 parser.add_argument('gap', type=float)
 parser.add_argument('--file', type=str, required=(not 'on'=='True'))
+parser.add_argument('--graph', type=str, default='', required=False)
 
 args = parser.parse_args()
 ReadingType = args.on == 'True'
 WindowSize = args.window
 WindowSlide = args.slide
 GapSize = args.gap
+GraphOn = args.graph == 'True'
 if not ReadingType:
     MyFile = args.file
 else:
@@ -44,8 +46,9 @@ else:
 
 
 class Source: 
-    def __init__(self, online, fixednum, slidesize, gap, filePath):
+    def __init__(self, online, fixednum, slidesize, gap, graph, filePath):
         self.cache = []
+        self.graph = graph
         self.gap = gap
         self.fixednum = fixednum
         self.slidesize = slidesize
@@ -71,17 +74,19 @@ class Source:
             return(int(self.file.readline())) #seems to always be an int
 
     def collect(self):
-        self.grapher = Grapher()
+        if self.graph:
+            self.grapher = Grapher()
+            self.grapher.graphinit() #initialize 
         current_data = [] #the list of single lines of data read in through the getData function
         current_state = [] #the list of medians(maxlen 5)
         current_value = 0 #whether the most recently read median is a one or zero?
-        self.grapher.graphinit() #initialize 
         first = True
         while True:
             current_data.append(source.getData())
             if len(current_data) >= int(self.fixednum * self.sample_rate):
                 current_state, current_value, median, first = self.process(current_data, current_state, current_value, first)
-                self.grapher.graph(median, current_value)
+                if self.graph:
+                    self.grapher.graph(median, current_value)
                 current_data = []
 
 
@@ -135,7 +140,7 @@ class Grapher:
         plt.ylabel('Amplitude', fontsize = 15)
 
 
-source = Source(ReadingType, WindowSize, WindowSlide, GapSize, r'%s' % MyFile)
+source = Source(ReadingType, WindowSize, WindowSlide, GapSize, GraphOn, r'%s' % MyFile)
 
 source.collect()
             
