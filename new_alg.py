@@ -6,7 +6,7 @@ import numpy as np
 import struct
 import matplotlib.pyplot as plt
 import argparse
-import time
+from scipy.signal import stft, find_peaks
 
 
 def parse_signed_16bit_numbers(data):
@@ -31,8 +31,9 @@ parser.add_argument('on', type=str)
 parser.add_argument('window', type=float)
 parser.add_argument('slide', type=float)
 parser.add_argument('gap', type=float)
-parser.add_argument('--file', type=str, required=(not 'on'=='True'))
+parser.add_argument('--file', type=str)
 parser.add_argument('--graph', action='store_true')
+parser.add_argument('--realtime', action='store_true')
 
 args = parser.parse_args()
 ReadingType = args.on == 'True'
@@ -40,6 +41,7 @@ WindowSize = args.window
 WindowSlide = args.slide
 GapSize = args.gap
 GraphOn = args.graph
+RealTime = args.realtime
 if not ReadingType:
     MyFile = args.file
 else:
@@ -47,7 +49,7 @@ else:
 
 
 class Source: 
-    def __init__(self, online, fixednum, slidesize, gap, graph, filePath):
+    def __init__(self, online, fixednum, slidesize, gap, graph, realtime, filePath):
         self.cache = []
         self.graph = graph
         self.gap = gap
@@ -55,6 +57,7 @@ class Source:
         self.slidesize = slidesize
         self.sample_rate = 48000
         self.online = online
+        self.realtime = realtime
         if self.online:
             pass
         else:
@@ -73,13 +76,14 @@ class Source:
                 return self.cache.pop()
         else:
             try:
-                return(int(self.file.readline())) #seems to always be an int
+                return(float(self.file.readline())) #seems to always be an int
             except ValueError:
+                print("error")
                 return(None)
 
     def collect(self):
         if self.graph:
-            self.grapher = Grapher(self.slidesize)
+            self.grapher = Grapher(self.slidesize, self.realtime)
             self.grapher.graphinit() #initialize 
         current_data = [] #the list of single lines of data read in through the getData function
         current_state = [] #the list of medians(maxlen 5)
@@ -88,7 +92,7 @@ class Source:
         while True:
             value = source.getData()
             if value == None:
-                break
+                continue
             current_data.append(value)
             if len(current_data) >= int(self.fixednum * self.sample_rate):
                 current_state, current_value, median, first = self.process(current_data, current_state, current_value, first)
@@ -96,6 +100,8 @@ class Source:
                 if self.graph:
                     self.grapher.graph(median, current_value)
                 current_data = []
+        if self.graph: self.grapher.graphend()
+        plt.show()
 
 
     def process(self, data, state, last_value, first):
@@ -124,10 +130,11 @@ class Source:
         return state, last_value, med, first
 
 class Grapher:
-    def __init__(self, slider):
+    def __init__(self, slider, realtime):
         self.x_axis = []
         self.allvals = []
         self.slider = slider
+        self.realtime = realtime
     
     def graph(self, medianValue, current_value):
         if medianValue.size > 0 :
@@ -138,17 +145,22 @@ class Grapher:
                 plt.title('ON', fontsize = 30, pad = 20)
             else:
                 plt.title('OFF', fontsize = 30, pad = 20)
-            plt.draw()
-            plt.pause(0.001)
+            if self.realtime:
+                plt.draw()
+                plt.pause(0.001)
 
     def graphinit(self):
         plt.figure()
         plt.ion()
-        plt.show()
+        if self.realtime:
+            plt.show()
         plt.xlabel('Time (s)', fontsize = 15)
         plt.ylabel('Amplitude', fontsize = 15)
+    
+    def graphend(self):
+        plt.ioff()
+        plt.show()
 
-
-source = Source(ReadingType, WindowSize, WindowSlide, GapSize, GraphOn, r'%s' % MyFile)
+source = Source(ReadingType, WindowSize, WindowSlide, GapSize, GraphOn, RealTime, r'%s' % MyFile)
 
 source.collect()
