@@ -6,7 +6,6 @@ import numpy as np
 import struct
 import matplotlib.pyplot as plt
 import argparse
-from scipy.signal import stft, find_peaks
 
 
 def parse_signed_16bit_numbers(data):
@@ -76,9 +75,9 @@ class Source:
                 return self.cache.pop()
         else:
             try:
-                return(float(self.file.readline())) #seems to always be an int
+                n = self.file.readline().rstrip()
+                return(float(n))
             except ValueError:
-                print("error")
                 return(None)
 
     def collect(self):
@@ -92,7 +91,7 @@ class Source:
         while True:
             value = source.getData()
             if value == None:
-                continue
+                break
             current_data.append(value)
             if len(current_data) >= int(self.fixednum * self.sample_rate):
                 current_state, current_value, median, first = self.process(current_data, current_state, current_value, first)
@@ -101,13 +100,14 @@ class Source:
                     self.grapher.graph(median, current_value)
                 current_data = []
         if self.graph: self.grapher.graphend()
-        plt.show()
+        self.file.close()
+        
 
 
     def process(self, data, state, last_value, first):
 
         med = np.median(data) #a single number
-        print(state)
+        #print(state)
         if first:
             if (med) < 0: #replace 0 with a number
                 last_value = 1
@@ -119,13 +119,13 @@ class Source:
         else: #not the first time
             if (len(state)>=1) and (abs(med-state[-1]) > self.gap) and (((last_value == 1) and ((med-state[-1]) < 0)) or ((last_value == 0) and ((med-state[-1]) > 0))):
                 last_value = flip(last_value)
-                print(last_value)
+                #print(last_value)
                 state = [med]
             else: #no last_value switch
                 state.append(med)
                 if len(state) == 5:
                     state = [med]
-                    print(last_value)
+                    #print(last_value)
         
         return state, last_value, med, first
 
@@ -140,12 +140,12 @@ class Grapher:
         if medianValue.size > 0 :
             self.allvals.append(medianValue)
             self.x_axis.append(self.slider * (len(self.x_axis) + 1)) #keeps a running list of proper x-vals
-            plt.plot(self.x_axis, self.allvals, color = 'black')
             if current_value == 0:
                 plt.title('ON', fontsize = 30, pad = 20)
             else:
                 plt.title('OFF', fontsize = 30, pad = 20)
             if self.realtime:
+                plt.plot(self.x_axis, self.allvals, color = 'black')
                 plt.draw()
                 plt.pause(0.001)
 
@@ -159,6 +159,8 @@ class Grapher:
     
     def graphend(self):
         plt.ioff()
+        if not self.realtime:
+            plt.plot(self.x_axis, self.allvals, color = 'black')
         plt.show()
 
 source = Source(ReadingType, WindowSize, WindowSlide, GapSize, GraphOn, RealTime, r'%s' % MyFile)
