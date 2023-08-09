@@ -7,6 +7,7 @@ import struct
 import matplotlib.pyplot as plt
 import pyautogui 
 import argparse
+
 def parse_signed_16bit_numbers(data):
     #Assuming 'data'is a 2-byte string or bytes object
     #Convert the bytes to a signed short using litte-endian format
@@ -29,7 +30,7 @@ def press_space():
     pass
 
 def release_space():
-    pyautogui.keyUp('space')
+    pyautogui.keyUp('space')    
     # print("Space key released")
     pass
 parser = argparse.ArgumentParser()
@@ -65,11 +66,6 @@ if not ReadingType:
     MyFile = args.file
 else:
     MyFile = ''
-
-MyFile = sys.argv[1]
-WindowSize = float(sys.argv[2])
-WindowSlide = float(sys.argv[3])
-GapSize = float(sys.argv[4])
 
 class Data: 
 
@@ -143,7 +139,7 @@ class Source:
             self.grapher = Grapher(self.slidesize, self.realtime)
             self.grapher.graphinit() #initialize 
         current_data = [] #the list of single lines of data read in through the getData function
-        current_state = [] #the list of medians(maxlen 5)
+        current_state = Data() #the list of medians(maxlen 5)
         current_value = 0 #whether the most recently read median is a one or zero?
         first = True
         while True:
@@ -177,7 +173,7 @@ class Source:
             first = False
         else: #not the first time
             if state.length() == 1 and state.has_last() and within(state.last, med, state.get(0), self.gap) and (abs(med-state.last)>self.gap):
-                print("hikhjkljhjklkljhgfldkjhaldhfankljdhlusadfhadfs;jadslisadfhilusdf") #if state is one long and has 2nd to last value and 1st and 3rd values have a gap and the gap between 2nd and 3rd values is fairly large
+                #if state is one long and has 2nd to last value and 1st and 3rd values have a gap and the gap between 2nd and 3rd values is fairly large
                 state.reset(med)
                 last_value = flip(last_value)
             elif (state.length()>=1) and (abs(med-state.get(-1)) > self.gap) and (((last_value == 1) and ((med-state.get(-1)) > 0)) or ((last_value == 0) and ((med-state.get(-1)) < 0))):
