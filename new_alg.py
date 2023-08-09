@@ -5,9 +5,8 @@ import sys
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
+import pyautogui 
 import argparse
-
-
 def parse_signed_16bit_numbers(data):
     #Assuming 'data'is a 2-byte string or bytes object
     #Convert the bytes to a signed short using litte-endian format
@@ -24,7 +23,15 @@ def flip(value):
         value = 1
     return value
 
+def press_space():
+    pyautogui.keyDown('space')
+    #print("Space key pressed")
+    pass
 
+def release_space():
+    pyautogui.keyUp('space')
+    # print("Space key released")
+    pass
 parser = argparse.ArgumentParser()
 parser.add_argument('on', type=str)
 parser.add_argument('window', type=float)
@@ -34,6 +41,19 @@ parser.add_argument('--file', type=str)
 parser.add_argument('--graph', action='store_true')
 parser.add_argument('--realtime', action='store_true')
 
+def within(bound1, bound2, num, gap):
+    bottom = 0
+    top = 0
+    if bound1 <= bound2:
+        top = bound2
+        bottom = bound1
+    else:
+        top = bound1
+        bottom = bound2
+    
+    
+    
+    return (bottom + 0.3*gap) <= num <= (top - 0.3*gap)
 args = parser.parse_args()
 ReadingType = args.on == 'True'
 WindowSize = args.window
@@ -45,6 +65,45 @@ if not ReadingType:
     MyFile = args.file
 else:
     MyFile = ''
+
+MyFile = sys.argv[1]
+WindowSize = float(sys.argv[2])
+WindowSlide = float(sys.argv[3])
+GapSize = float(sys.argv[4])
+
+class Data: 
+
+    def __init__(self):
+        self.data = []
+        self.last = None
+    
+    def add(self, num):
+        self.data.append(num)
+
+    def reset(self, num):
+        self.data = [num]
+    
+    def store(self):
+        self.last = self.data[-2]
+    
+    def length(self):
+        return len(self.data)
+    
+    def get(self, index):
+        return self.data[index]
+    
+    def __str__(self):
+        return str(self.data)
+    
+    def __repr__(self):
+        return str(self.data)
+    
+    def has_last(self):
+        if self.last is None:
+            return False
+        else:
+            return True
+
 
 
 class Source: 
@@ -104,27 +163,41 @@ class Source:
 
 
     def process(self, data, state, last_value, first):
-
+        
         med = np.median(data) #a single number
-        #print(state)
+        print(state)
+        
         if first:
             if (med) < 0: #replace 0 with a number
                 last_value = 1
             else:
                 last_value = 0
-            state = [med] #state is one median long
+            state.reset(med) #state is one median long
             
             first = False
         else: #not the first time
-            if (len(state)>=1) and (abs(med-state[-1]) > self.gap) and (((last_value == 1) and ((med-state[-1]) < 0)) or ((last_value == 0) and ((med-state[-1]) > 0))):
+            if state.length() == 1 and state.has_last() and within(state.last, med, state.get(0), self.gap) and (abs(med-state.last)>self.gap):
+                print("hikhjkljhjklkljhgfldkjhaldhfankljdhlusadfhadfs;jadslisadfhilusdf") #if state is one long and has 2nd to last value and 1st and 3rd values have a gap and the gap between 2nd and 3rd values is fairly large
+                state.reset(med)
+                last_value = flip(last_value)
+            elif (state.length()>=1) and (abs(med-state.get(-1)) > self.gap) and (((last_value == 1) and ((med-state.get(-1)) > 0)) or ((last_value == 0) and ((med-state.get(-1)) < 0))):
                 last_value = flip(last_value)
                 print(last_value)
-                state = [med]
+                state.reset(med)
+                if last_value == 1:
+                    press_space()
+                else:
+                    release_space()
             else: #no last_value switch
-                state.append(med)
-                if len(state) == 5:
-                    state = [med]
+                state.add(med)
+                if state.length() == 5:
+                    state.store()
+                    state.reset(med)
                     print(last_value)
+                    if last_value == 1:
+                        press_space()
+                    else:
+                        release_space()
         
         return state, last_value, med, first
 
