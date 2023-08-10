@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
-import pyautogui 
+import pyautogui    
 import argparse
 
 def parse_signed_16bit_numbers(data):
@@ -16,12 +16,12 @@ def parse_signed_16bit_numbers(data):
 
 def split_by_2(string):
     return [string[i:i+2] for i in range(0, len(string), 2)]
-
+      
 def flip(value): 
     if value == 1:
         value = 0
     else:
-        value = 1
+        value = 1    
     return value
 
 def press_up():
@@ -33,15 +33,7 @@ def press_down():
     #pyautogui.keyDown('down')
     #print("Up key pressed")
     pass
-parser = argparse.ArgumentParser()
-parser.add_argument('on', type=str)
-parser.add_argument('window', type=float)
-parser.add_argument('slide', type=float)
-parser.add_argument('gap', type=float)
-parser.add_argument('--file', type=str)
-parser.add_argument('--graph', action='store_true')
-parser.add_argument('--realtime', action='store_true')
-
+   
 def release():
     #pyautogui.keyUp('up')
     #pyautogui.keyUp('down')
@@ -57,10 +49,20 @@ def within(bound1, bound2, num, gap):
     else:
         top = bound1
         bottom = bound2
-    
-    
-    
     return (bottom + 0.3*gap) <= num <= (top - 0.3*gap)
+
+
+parser = argparse.ArgumentParser()  
+parser.add_argument('on', type=str)
+parser.add_argument('window', type=float) 
+parser.add_argument('slide', type=float)
+parser.add_argument('gap', type=float)
+parser.add_argument('--file', type=str)
+parser.add_argument('--graph', action='store_true')
+parser.add_argument('--realtime', action='store_true')
+parser.add_argument('--debug', action='store_true')
+
+
 args = parser.parse_args()
 ReadingType = args.on == 'True'
 WindowSize = args.window
@@ -68,6 +70,7 @@ WindowSlide = args.slide
 GapSize = args.gap
 GraphOn = args.graph
 RealTime = args.realtime
+DebugOn = args.debug
 if not ReadingType:
     MyFile = args.file
 else:
@@ -109,7 +112,7 @@ class Data:
 
 
 class Source: 
-    def __init__(self, online, fixednum, slidesize, gap, graph, realtime, filePath):
+    def __init__(self, online, fixednum, slidesize, gap, graph, realtime, debug, filePath):
         self.graph = graph
         self.gap = gap
         self.fixednum = fixednum
@@ -117,6 +120,7 @@ class Source:
         self.sample_rate = 48000
         self.online = online
         self.realtime = realtime
+        self.debug = debug
         if self.online:
             self.cache = []
         else:
@@ -147,8 +151,6 @@ class Source:
         current_data = [] #the list of single lines of data read in through the getData function
         current_state = Data() #the list of medians(maxlen 5)
         current_decode = []
-        x_axis = []
-        allvals = []
         current_value = 0 #whether the most recently read median is a one or zero?
         first = True
         while True:
@@ -169,7 +171,7 @@ class Source:
     def process(self, data, state, last_value, decode, first):
         
         med = np.median(data) #a single number
-        print(state)
+        if self.debug: print(state)
         
         if first:
             if (med) < 0: #replace 0 with a number
@@ -187,7 +189,7 @@ class Source:
                 last_value = flip(last_value)
             elif (state.length()>=1) and (abs(med-state.get(-1)) > self.gap) and (((last_value == 1) and ((med-state.get(-1)) > 0)) or ((last_value == 0) and ((med-state.get(-1)) < 0))):
                 last_value = flip(last_value)
-                print(last_value)
+                if self.debug: print(last_value)
                 decode.append(last_value)
                 state.reset(med)
                 if decode == [1,1]:
@@ -206,7 +208,7 @@ class Source:
                 if state.length() == 3:
                     state.store()
                     state.reset(med)
-                    print(last_value)
+                    if self.debug:print(last_value)
                     decode.append(last_value)
                     if decode == [1,1]:
                         press_up()
@@ -256,6 +258,6 @@ class Grapher:
             plt.plot(self.x_axis, self.allvals, color = 'black')
         plt.show()
 
-source = Source(ReadingType, WindowSize, WindowSlide, GapSize, GraphOn, RealTime, r'%s' % MyFile)
+source = Source(ReadingType, WindowSize, WindowSlide, GapSize, GraphOn, RealTime, DebugOn, r'%s' % MyFile)
 
 source.collect()
