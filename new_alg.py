@@ -24,14 +24,14 @@ def flip(value):
         value = 1
     return value
 
-def press_space():
-    pyautogui.keyDown('space')
-    #print("Space key pressed")
+def press_up():
+    #pyautogui.keyDown('up')
+    #print("Up key pressed")
     pass
 
-def release_space():
-    pyautogui.keyUp('space')    
-    # print("Space key released")
+def press_down():
+    #pyautogui.keyDown('down')
+    #print("Up key pressed")
     pass
 parser = argparse.ArgumentParser()
 parser.add_argument('on', type=str)
@@ -41,6 +41,12 @@ parser.add_argument('gap', type=float)
 parser.add_argument('--file', type=str)
 parser.add_argument('--graph', action='store_true')
 parser.add_argument('--realtime', action='store_true')
+
+def release():
+    #pyautogui.keyUp('up')
+    #pyautogui.keyUp('down')
+    #print("Keys released")
+    pass
 
 def within(bound1, bound2, num, gap):
     bottom = 0
@@ -140,6 +146,9 @@ class Source:
             self.grapher.graphinit() #initialize 
         current_data = [] #the list of single lines of data read in through the getData function
         current_state = Data() #the list of medians(maxlen 5)
+        current_decode = []
+        x_axis = []
+        allvals = []
         current_value = 0 #whether the most recently read median is a one or zero?
         first = True
         while True:
@@ -148,8 +157,7 @@ class Source:
                 break
             current_data.append(value)
             if len(current_data) >= int(self.fixednum * self.sample_rate):
-                current_state, current_value, median, first = self.process(current_data, current_state, current_value, first)
-                #time.sleep(0.1)
+                current_state, current_value, median, current_decode, first = self.process(current_data, current_state, current_value, current_decode, first)
                 if self.graph:
                     self.grapher.graph(median, current_value)
                 current_data = []
@@ -158,7 +166,7 @@ class Source:
         
 
 
-    def process(self, data, state, last_value, first):
+    def process(self, data, state, last_value, decode, first):
         
         med = np.median(data) #a single number
         print(state)
@@ -171,6 +179,7 @@ class Source:
             state.reset(med) #state is one median long
             
             first = False
+            decode.append(last_value)
         else: #not the first time
             if state.length() == 1 and state.has_last() and within(state.last, med, state.get(0), self.gap) and (abs(med-state.last)>self.gap):
                 #if state is one long and has 2nd to last value and 1st and 3rd values have a gap and the gap between 2nd and 3rd values is fairly large
@@ -179,23 +188,39 @@ class Source:
             elif (state.length()>=1) and (abs(med-state.get(-1)) > self.gap) and (((last_value == 1) and ((med-state.get(-1)) > 0)) or ((last_value == 0) and ((med-state.get(-1)) < 0))):
                 last_value = flip(last_value)
                 print(last_value)
+                decode.append(last_value)
                 state.reset(med)
-                if last_value == 1:
-                    press_space()
+                if decode == [1,1]:
+                    press_up()
+                    decode = []
+                elif decode == [0,0]:
+                    press_down()
+                    decode = []
+                elif len(decode) >= 2:
+                    release()
+                    decode = []
                 else:
-                    release_space()
+                    pass
             else: #no last_value switch
                 state.add(med)
-                if state.length() == 5:
+                if state.length() == 3:
                     state.store()
                     state.reset(med)
                     print(last_value)
-                    if last_value == 1:
-                        press_space()
+                    decode.append(last_value)
+                    if decode == [1,1]:
+                        press_up()
+                        decode = []
+                    elif decode == [0,0]:
+                        press_down()
+                        decode = []
+                    elif len(decode) >= 2:
+                        release()
+                        decode = []
                     else:
-                        release_space()
+                        pass
         
-        return state, last_value, med, first
+        return state, last_value, med, decode, first
 
 class Grapher:
     def __init__(self, slider, realtime):
