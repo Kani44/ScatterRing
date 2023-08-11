@@ -191,7 +191,7 @@ class Source:
                 #if state is one long and has 2nd to last value and 1st and 3rd values have a gap and the gap between 2nd and 3rd values is fairly large
                 state.reset(med)
                 last_value = flip(last_value)
-            elif (state.length() >= 1) and '''a value shift -->''' (abs(med-state.get(-1)) > self.gap) and (((last_value == 1) and ((med-state.get(-1)) > 0)) or ((last_value == 0) and ((med-state.get(-1)) < 0))):
+            elif (state.length() >= 1) and (abs(med-state.get(-1)) > self.gap) and (((last_value == 1) and ((med-state.get(-1)) > 0)) or ((last_value == 0) and ((med-state.get(-1)) < 0))):
                 #over 1 long and a value shift 
                 last_value = flip(last_value)
                 state.reset(med)
