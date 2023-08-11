@@ -7,6 +7,7 @@ import struct
 import matplotlib.pyplot as plt
 import pyautogui    
 import argparse
+#import pyqtgraph as pg
 
 def parse_signed_16bit_numbers(data):
     #Assuming 'data'is a 2-byte string or bytes object
@@ -82,19 +83,19 @@ class Data:
         self.data = []
         self.last = None
     
-    def add(self, num):
+    def add(self, num): #append
         self.data.append(num)
 
-    def reset(self, num):
-        self.data = [num]
+    def reset(self, num): # = [med]
+        self.data = [num] 
     
-    def store(self):
+    def store(self): #last
         self.last = self.data[-2]
     
-    def length(self):
+    def length(self): #len
         return len(self.data)
     
-    def get(self, index):
+    def get(self, index): #[]
         return self.data[index]
     
     def __str__(self):
@@ -148,13 +149,13 @@ class Source:
         if self.graph:
             self.grapher = Grapher(self.slidesize, self.realtime)
             self.grapher.graphinit() #initialize 
-        current_data = [] #the list of single lines of data read in through the getData function
+        current_data = [] #the list of single numbers of data read in through the getData function
         current_state = Data() #the list of medians(maxlen 5)
         current_decode = []
         current_value = 0 #whether the most recently read median is a one or zero?
         first = True
         while True:
-            value = source.getData()
+            value = source.getData() #a single number of data
             if value == None:
                 break
             current_data.append(value)
@@ -163,6 +164,7 @@ class Source:
                 if self.graph:
                     self.grapher.graph(median, current_value)
                 current_data = []
+        
         if self.graph: self.grapher.graphend()
         self.file.close()
         
@@ -182,47 +184,43 @@ class Source:
             
             first = False
             decode.append(last_value)
+
+
         else: #not the first time
-            if state.length() == 1 and state.has_last() and within(state.last, med, state.get(0), self.gap) and (abs(med-state.last)>self.gap):
+            if state.length() == 1 and state.has_last() and within(state.last, med, state.get(0), self.gap) and (abs(med-state.last) > self.gap):
                 #if state is one long and has 2nd to last value and 1st and 3rd values have a gap and the gap between 2nd and 3rd values is fairly large
                 state.reset(med)
                 last_value = flip(last_value)
-            elif (state.length()>=1) and (abs(med-state.get(-1)) > self.gap) and (((last_value == 1) and ((med-state.get(-1)) > 0)) or ((last_value == 0) and ((med-state.get(-1)) < 0))):
+            elif (state.length() >= 1) and '''a value shift -->''' (abs(med-state.get(-1)) > self.gap) and (((last_value == 1) and ((med-state.get(-1)) > 0)) or ((last_value == 0) and ((med-state.get(-1)) < 0))):
+                #over 1 long and a value shift 
                 last_value = flip(last_value)
-                if self.debug: print(last_value)
-                decode.append(last_value)
                 state.reset(med)
-                if decode == [1,1]:
-                    press_up()
-                    decode = []
-                elif decode == [0,0]:
-                    press_down()
-                    decode = []
-                elif len(decode) >= 2:
-                    release()
-                    decode = []
-                else:
-                    pass
+                decode, last_value = self.decode(decode, last_value=last_value)
+           
             else: #no last_value switch
-                state.add(med)
+                state.add(med)  
                 if state.length() == 3:
                     state.store()
                     state.reset(med)
-                    if self.debug:print(last_value)
-                    decode.append(last_value)
-                    if decode == [1,1]:
-                        press_up()
-                        decode = []
-                    elif decode == [0,0]:
-                        press_down()
-                        decode = []
-                    elif len(decode) >= 2:
-                        release()
-                        decode = []
-                    else:
-                        pass
+                    decode, last_value = self.decode(decode, last_value=last_value)
         
         return state, last_value, med, decode, first
+    
+    
+    def decode(self, decode_list, last_value):
+        if self.debug: print(last_value)
+        decode_list.append(last_value)
+        if decode_list == [1,1]:
+            press_up()
+            decode_list = []
+        elif decode_list == [0,0]:
+            press_down()
+            decode_list = []
+        elif len(decode_list) >= 2:
+            release()
+            decode_list = []
+        return decode_list, last_value
+
 
 class Grapher:
     def __init__(self, slider, realtime):
@@ -232,17 +230,16 @@ class Grapher:
         self.realtime = realtime
     
     def graph(self, medianValue, current_value):
-        if medianValue.size > 0 :
-            self.allvals.append(medianValue)
-            self.x_axis.append(self.slider * (len(self.x_axis) + 1)) #keeps a running list of proper x-vals
-            if current_value == 0:
-                plt.title('ON', fontsize = 30, pad = 20)
-            else:
-                plt.title('OFF', fontsize = 30, pad = 20)
-            if self.realtime:
-                plt.plot(self.x_axis, self.allvals, color = 'black')
-                plt.draw()
-                plt.pause(0.001)
+        self.allvals.append(medianValue)
+        self.x_axis.append(WindowSize + self.slider * (len(self.x_axis))) #keeps a running list of proper x-vals
+        if current_value == 0:
+            plt.title('ON', fontsize = 30, pad = 20)
+        else:
+            plt.title('OFF', fontsize = 30, pad = 20)
+        if self.realtime:
+            #pg.plot(self.x_axis, self.allvals, color = 'black')
+            plt.plot(self.x_axis, self.allvals, color = 'black')
+            plt.pause(0.001)
 
     def graphinit(self):
         plt.figure()
@@ -257,6 +254,7 @@ class Grapher:
         if not self.realtime:
             plt.plot(self.x_axis, self.allvals, color = 'black')
         plt.show()
+        plt.close()
 
 source = Source(ReadingType, WindowSize, WindowSlide, GapSize, GraphOn, RealTime, DebugOn, r'%s' % MyFile)
 
