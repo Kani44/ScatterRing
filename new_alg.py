@@ -128,7 +128,7 @@ class Source:
             self.file = open(filePath, 'r')
             print("File Opened")
 
-    def getData(self): #all one data point at a time
+    def getData(self):
         if self.online:
             if len(self.cache) > 0:
                 return self.cache.pop()
@@ -149,52 +149,77 @@ class Source:
         if self.graph:
             self.grapher = Grapher(self.slidesize, self.realtime)
             self.grapher.graphinit() #initialize 
-        current_data = []
+        current_data = [] #the list of single numbers of data read in through the getData function
+        current_state = Data() #the list of medians(maxlen 5)
+        current_decode = []
+        current_value = 0 #whether the most recently read median is a one or zero?
+        first = True
         while True:
             value = source.getData() #a single number of data
             if value == None:
                 break
-            current_data = self.process(value, current_data)
+            current_data.append(value)
+            if len(current_data) >= int(self.fixednum * self.sample_rate):
+                current_state, current_value, median, current_decode, first = self.process(current_data, current_state, current_value, current_decode, first)
+                if self.graph:
+                    self.grapher.graph(median, current_value)
+                current_data = []
         
         if self.graph: self.grapher.graphend()
         self.file.close()
         
 
 
-    def process(self, value, data):
+    def process(self, data, state, last_value, decode, first):
         
-        if self.debug: print(value)
-        if value > 12500:#___ * borderline:
-            bit = 1
-            data.append(bit)
-        elif value < 12500: #__ * borderline:
-            bit = 0
-            data.append(bit)
-        else:
-            bit = None
+        med = np.median(data) #a single number
+        if self.debug: print(state)
         
-        data, key = self.decode(data, bit)
-        if self.graph:
-            self.grapher.graph(value, key)
-        return data
+        if first:
+            if (med) < 0: #replace 0 with a number
+                last_value = 1
+            else:
+                last_value = 0
+            state.reset(med) #state is one median long
+            
+            first = False
+            decode.append(last_value)
+
+
+        else: #not the first time
+            if state.length() == 1 and state.has_last() and within(state.last, med, state.get(0), self.gap) and (abs(med-state.last) > self.gap):
+                #if state is one long and has 2nd to last value and 1st and 3rd values have a gap and the gap between 2nd and 3rd values is fairly large
+                state.reset(med)
+                last_value = flip(last_value)
+            elif (state.length() >= 1) and (abs(med-state.get(-1)) > self.gap) and (((last_value == 1) and ((med-state.get(-1)) > 0)) or ((last_value == 0) and ((med-state.get(-1)) < 0))):
+                #over 1 long and a value shift 
+                last_value = flip(last_value)
+                state.reset(med)
+                decode, last_value = self.decode(decode, last_value=last_value)
+           
+            else: #no last_value switch
+                state.add(med)  
+                if state.length() == 3:
+                    state.store()
+                    state.reset(med)
+                    decode, last_value = self.decode(decode, last_value=last_value)
+        
+        return state, last_value, med, decode, first
     
     
-    def decode(self, data_list):
-        if
+    def decode(self, decode_list, last_value):
+        if self.debug: print(last_value)
+        decode_list.append(last_value)
+        if decode_list == [1,1]:
             press_up()
-            key = "Up"
-            data_list = []
-        elif :
+            decode_list = []
+        elif decode_list == [0,0]:
             press_down()
-            key = "Down"
-            data_list = []
-        elif :
+            decode_list = []
+        elif len(decode_list) >= 2:
             release()
-            key = "Released"
-            data_list = []
-        else:
-            key = None
-        return data_list, key
+            decode_list = []
+        return decode_list, last_value
 
 
 class Grapher:
@@ -204,11 +229,13 @@ class Grapher:
         self.slider = slider
         self.realtime = realtime
     
-    def graph(self, medianValue, key):
+    def graph(self, medianValue, current_value):
         self.allvals.append(medianValue)
         self.x_axis.append(WindowSize + self.slider * (len(self.x_axis))) #keeps a running list of proper x-vals
-        if key != None: 
-            plt.title(key, fontsize = 30, pad = 20)
+        if current_value == 0:
+            plt.title('ON', fontsize = 30, pad = 20)
+        else:
+            plt.title('OFF', fontsize = 30, pad = 20)
         if self.realtime:
             #pg.plot(self.x_axis, self.allvals, color = 'black')
             plt.plot(self.x_axis, self.allvals, color = 'black')
