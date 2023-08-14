@@ -186,7 +186,7 @@ class Source:
             decode.append(last_value)
 
 
-        else: #not the first time
+        else: #not the first time yeah
             if state.length() == 1 and state.has_last() and within(state.last, med, state.get(0), self.gap) and (abs(med-state.last) > self.gap):
                 #if state is one long and has 2nd to last value and 1st and 3rd values have a gap and the gap between 2nd and 3rd values is fairly large
                 state.reset(med)
