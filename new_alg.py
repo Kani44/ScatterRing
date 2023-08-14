@@ -180,7 +180,7 @@ class Source:
     
     
     def decode(self, data_list):
-        if
+        if #yeah
             press_up()
             key = "Up"
             data_list = []
