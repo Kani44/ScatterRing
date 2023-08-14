@@ -173,25 +173,22 @@ class Source:
         else:
             bit = None
         
-        if(len(data) >= self.fixednum * self.sample_rate):
-            #STUFF
-            data, key = self.decode(data, bit)
-            if self.graph:
-                self.grapher.graph(value, key)
+        data, key = self.decode(data, bit)
+        if self.graph:
+            self.grapher.graph(value, key)
         return data
     
     
-    def decode(self, data_list, last_bit):
-        if self.debug: print(last_bit)
-        if data_list == [1,1]:
+    def decode(self, data_list):
+        if
             press_up()
             key = "Up"
             data_list = []
-        elif data_list == [0,0]:
+        elif :
             press_down()
             key = "Down"
             data_list = []
-        elif len(data_list) >= 2: #[0, 1] or [1, 0]
+        elif :
             release()
             key = "Released"
             data_list = []
