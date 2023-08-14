@@ -7,8 +7,9 @@ import struct
 import matplotlib.pyplot as plt
 import pyautogui    
 import argparse
-import statistics as st
-#import pyqtgraph as pg
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui
+
 
 def parse_signed_16bit_numbers(data):
     #Assuming 'data'is a 2-byte string or bytes object
@@ -42,6 +43,7 @@ def release():
     #print("Keys released")
     pass
 
+'''
 def within(bound1, bound2, num, gap):
     bottom = 0
     top = 0
@@ -52,6 +54,7 @@ def within(bound1, bound2, num, gap):
         top = bound1
         bottom = bound2
     return (bottom + 0.3*gap) <= num <= (top - 0.3*gap)
+'''
 
 
 parser = argparse.ArgumentParser()  
@@ -78,6 +81,7 @@ if not ReadingType:
 else:
     MyFile = ''
 
+'''
 class Data: 
 
     def __init__(self):
@@ -111,7 +115,7 @@ class Data:
         else:
             return True
 
-
+'''
 
 class Source: 
     def __init__(self, online, fixednum, slidesize, gap, graph, realtime, debug, filePath):
@@ -148,7 +152,7 @@ class Source:
 
     def collect(self):
         if self.graph:
-            self.grapher = Grapher(self.slidesize, self.realtime)
+            self.grapher = Grapher(self.slidesize, self.realtime, self.sample_rate)
             self.grapher.graphinit() #initialize 
         current_data = []
         
@@ -163,7 +167,6 @@ class Source:
         
     
     def process(self, value, data):
-        if self.debug: print(value)
         if value > 12500:#___ * borderline:
             if len(data) > 0 and data[-1] > 0:
                 data[-1] += 1
@@ -176,34 +179,46 @@ class Source:
                 if data[-1] <= -10: print(data[-1])
             else:
                 data.append(-1)
-        #print(data)
+        if self.debug: print(data)
         if self.graph:
             self.grapher.graph(value, 'sure')
         return data
 
 
 class Grapher:
-    def __init__(self, slider, realtime):
+    def __init__(self, slider, realtime, sample_rate):
         self.x_axis = []
         self.allvals = []
         self.slider = slider
+        self.sample_rate = sample_rate
         self.realtime = realtime
     
     def graph(self, medianValue, key):
         self.allvals.append(medianValue)
-        self.x_axis.append(WindowSize + self.slider * (len(self.x_axis))) #keeps a running list of proper x-vals
+        self.x_axis.append(len(self.x_axis) / self.sample_rate) #keeps a running list of proper x-vals
         if key != None: 
             plt.title(key, fontsize = 30, pad = 20)
         if self.realtime:
+            self.curve.setData(self.x_axis, self.allvals)
             #pg.plot(self.x_axis, self.allvals, color = 'black')
-            plt.plot(self.x_axis, self.allvals, color = 'black')
-            plt.pause(0.001)
+            #plt.plot(self.x_axis, self.allvals, color = 'black')
+            #plt.pause(0.001)
 
     def graphinit(self):
         plt.figure()
         plt.ion()
         if self.realtime:
-            plt.show()
+            #self.graphWidget = pg.PlotWidget()
+            #self.graphWidget.setBackground('w')
+            #self.data_line =  self.graphWidget.plot(self.allvals, self.x_axis)
+            #plt.show()
+            app = QtGui.QApplication([])
+
+            # Create a Plot Widget
+            win = pg.GraphicsWindow(title="Real-time Plot")
+            plot = win.addPlot(title="Data Over Time")
+            self.curve = plot.plot(pen='r')
+            # Function to update the plot with new data
         plt.xlabel('Time (s)', fontsize = 15)
         plt.ylabel('Amplitude', fontsize = 15)
     
