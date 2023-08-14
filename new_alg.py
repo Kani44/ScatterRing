@@ -163,9 +163,20 @@ class Source:
         
     
     def process(self, value, data):
-        data.append(value)
-        if (len(data) > self.fixednum * self.sample_rate):
-            print(st.mode(data))
+        if self.debug: print(value)
+        if value > 12500:#___ * borderline:
+            if len(data) > 0 and data[-1] > 0:
+                data[-1] += 1
+                if data[-1] >= 10: print(data[-1])
+            else:
+                data.append(1)
+        elif value < 7500: #__ * borderline:
+            if len(data) > 0 and data[-1] < 0:
+                data[-1] -= 1
+                if data[-1] <= -10: print(data[-1])
+            else:
+                data.append(-1)
+        #print(data)
         if self.graph:
             self.grapher.graph(value, 'sure')
         return data
