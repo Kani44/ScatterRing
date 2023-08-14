@@ -7,6 +7,7 @@ import struct
 import matplotlib.pyplot as plt
 import pyautogui    
 import argparse
+import statistics as st
 #import pyqtgraph as pg
 
 def parse_signed_16bit_numbers(data):
@@ -118,7 +119,7 @@ class Source:
         self.gap = gap
         self.fixednum = fixednum
         self.slidesize = slidesize
-        self.sample_rate = 48000
+        self.sample_rate = 48000/129
         self.online = online
         self.realtime = realtime
         self.debug = debug
@@ -150,6 +151,7 @@ class Source:
             self.grapher = Grapher(self.slidesize, self.realtime)
             self.grapher.graphinit() #initialize 
         current_data = []
+        
         while True:
             value = source.getData() #a single number of data
             if value == None:
@@ -159,42 +161,14 @@ class Source:
         if self.graph: self.grapher.graphend()
         self.file.close()
         
-
-
+    
     def process(self, value, data):
-        
-        if self.debug: print(value)
-        if value > 12500:#___ * borderline:
-            bit = 1
-            data.append(bit)
-        elif value < 12500: #__ * borderline:
-            bit = 0
-            data.append(bit)
-        else:
-            bit = None
-        
-        data, key = self.decode(data, bit)
+        data.append(value)
+        if (len(data) > self.fixednum * self.sample_rate):
+            print(st.mode(data))
         if self.graph:
-            self.grapher.graph(value, key)
+            self.grapher.graph(value, 'sure')
         return data
-    
-    
-    def decode(self, data_list):
-        if #yeah
-            press_up()
-            key = "Up"
-            data_list = []
-        elif :
-            press_down()
-            key = "Down"
-            data_list = []
-        elif :
-            release()
-            key = "Released"
-            data_list = []
-        else:
-            key = None
-        return data_list, key
 
 
 class Grapher:
