@@ -43,20 +43,6 @@ def release():
     #print("Keys released")
     pass
 
-'''
-def within(bound1, bound2, num, gap):
-    bottom = 0
-    top = 0
-    if bound1 <= bound2:
-        top = bound2
-        bottom = bound1
-    else:
-        top = bound1
-        bottom = bound2
-    return (bottom + 0.3*gap) <= num <= (top - 0.3*gap)
-'''
-
-
 parser = argparse.ArgumentParser()  
 parser.add_argument('on', type=str)
 parser.add_argument('window', type=float) 
@@ -80,42 +66,6 @@ if not ReadingType:
     MyFile = args.file
 else:
     MyFile = ''
-
-'''
-class Data: 
-
-    def __init__(self):
-        self.data = []
-        self.last = None
-    
-    def add(self, num): #append
-        self.data.append(num)
-
-    def reset(self, num): # = [med]
-        self.data = [num] 
-    
-    def store(self): #last
-        self.last = self.data[-2]
-    
-    def length(self): #len
-        return len(self.data)
-    
-    def get(self, index): #[]
-        return self.data[index]
-    
-    def __str__(self):
-        return str(self.data)
-    
-    def __repr__(self):
-        return str(self.data)
-    
-    def has_last(self):
-        if self.last is None:
-            return False
-        else:
-            return True
-
-'''
 
 class Source: 
     def __init__(self, online, fixednum, slidesize, gap, graph, realtime, debug, filePath):
@@ -155,33 +105,52 @@ class Source:
             self.grapher = Grapher(self.slidesize, self.realtime, self.sample_rate)
             self.grapher.graphinit() #initialize 
         current_data = []
-        
+        current_values = []
+        previousvalue = 'first'
         while True:
             value = source.getData() #a single number of data
             if value == None:
                 break
-            current_data = self.process(value, current_data)
+            else:
+                current_values.append(value)
+            if len(current_values) > self.sample_rate * self.fixednum:
+                #print('yeah')
+                pass
+            if previousvalue == 'first':
+                gap = 0
+            else:
+                gap = previousvalue - value
+            
+            current_data = self.process(gap, current_data)
+            previousvalue = value
+            if self.graph: self.grapher.graph(value, 'sure')
         
         if self.graph: self.grapher.graphend()
         self.file.close()
         
     
-    def process(self, value, data):
-        if value > 12500:#___ * borderline:
+    def process(self, gap, data):
+        if gap > 250:#___ * borderline:
             if len(data) > 0 and data[-1] > 0:
                 data[-1] += 1
-                if data[-1] >= 10: print(data[-1])
+                if data[-1] >= 15:
+                    print(data[-1])
             else:
                 data.append(1)
-        elif value < 7500: #__ * borderline:
+        elif gap < -250: #__ * borderline:
             if len(data) > 0 and data[-1] < 0:
                 data[-1] -= 1
-                if data[-1] <= -10: print(data[-1])
+                if data[-1] <= -15:
+                    print(data[-1])
             else:
                 data.append(-1)
+        else:
+            if len(data) > 0:
+                if data[-1] > 0:
+                    data[-1] += 1
+                elif len(data) < 0:
+                    data[-1] -= 1
         if self.debug: print(data)
-        if self.graph:
-            self.grapher.graph(value, 'sure')
         return data
 
 
@@ -199,10 +168,10 @@ class Grapher:
         if key != None: 
             plt.title(key, fontsize = 30, pad = 20)
         if self.realtime:
-            self.curve.setData(self.x_axis, self.allvals)
+            #self.curve.setData(self.x_axis, self.allvals)
             #pg.plot(self.x_axis, self.allvals, color = 'black')
-            #plt.plot(self.x_axis, self.allvals, color = 'black')
-            #plt.pause(0.001)
+            plt.plot(self.x_axis, self.allvals, color = 'black')
+            plt.pause(0.001)
 
     def graphinit(self):
         plt.figure()
@@ -211,13 +180,13 @@ class Grapher:
             #self.graphWidget = pg.PlotWidget()
             #self.graphWidget.setBackground('w')
             #self.data_line =  self.graphWidget.plot(self.allvals, self.x_axis)
-            #plt.show()
-            app = QtGui.QApplication([])
+            plt.show()
+            #app = QtGui.QApplication([])
 
             # Create a Plot Widget
-            win = pg.GraphicsWindow(title="Real-time Plot")
-            plot = win.addPlot(title="Data Over Time")
-            self.curve = plot.plot(pen='r')
+            #win = pg.GraphicsWindow(title="Real-time Plot")
+            #plot = win.addPlot(title="Data Over Time")
+            #self.curve = plot.plot(pen='r')
             # Function to update the plot with new data
         plt.xlabel('Time (s)', fontsize = 15)
         plt.ylabel('Amplitude', fontsize = 15)
